@@ -181,10 +181,10 @@ else:
     st.markdown("---")
     with st.expander("✨ What does Tync do?"): st.markdown("Matchmaking assistant for hackathons.")
     with st.expander("📝 Step 1: Enter your Event"):
-        
+        st.markdown("...")
 
     with st.expander("🛠️ Step 2: List your Skills"):
-        
+        st.markdown("...")
 
     with st.expander("🎯 Step 3: Who are you looking for?"):
-      
+        st.markdown("...")
