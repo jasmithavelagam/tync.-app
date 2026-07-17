@@ -39,7 +39,7 @@ st.markdown(
         background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px) !important;
         background-size: 3px 3px, 5px 5px !important;
     }
-    
+
     /* Hide default Streamlit header */
     [data-testid="stHeader"] { background-color: transparent !important; }
 
@@ -70,7 +70,7 @@ st.markdown(
         font-family: 'Space Mono', monospace !important;
         -webkit-text-fill-color: #800020 !important; /* Forces text color in WebKit browsers */
     }
-    
+
     /* Focus state for inputs */
     div[data-baseweb="input"]:focus-within {
         border-color: #800020 !important;
@@ -96,27 +96,26 @@ st.markdown(
         background-color: #5a0016 !important; 
     }
 
-    /* Zigzag border */
+    /* Straight top border */
     .zigzag-top {
-        height: 22px; width: 100%;
-        background: linear-gradient(135deg, #1c1c1c 25%, transparent 25%) -11px 0,
-                    linear-gradient(225deg, #1c1c1c 25%, transparent 25%) -11px 0;
-        background-size: 22px 22px; background-repeat: repeat-x; margin-bottom: 25px;
+        height: 4px; width: 100%;
+        background-color: #800020;
+        margin-bottom: 25px;
     }
-    
+
     /* Alerts and Expanders */
     .stAlert { background-color: #EDE8DA !important; border: 1px solid #800020 !important; border-radius: 0px !important; }
     div[data-testid="stExpander"] details { background-color: #EDE8DA !important; border: 1px solid #800020 !important; border-radius: 0px !important; }
     div[data-testid="stExpander"] details summary p { color: #800020 !important; font-weight: 600 !important; }
     div[data-testid="stExpander"] details summary svg { fill: #800020 !important; }
-    
+
     hr { border-color: #800020 !important; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Render Zigzag
+# Render top border
 st.markdown('<div class="zigzag-top"></div>', unsafe_allow_html=True)
 
 # -----------------------------------------
@@ -160,7 +159,7 @@ else:
     event_name = st.text_input("Event Name")
     user_skills = st.text_input("Your Skills")
     skills_needed = st.text_input("Skills Needed")
-    
+
     if st.button("Update Profile & Find Matches"):
         if not event_name or not skills_needed or not user_skills:
             st.error("Please fill all fields.")
@@ -168,7 +167,7 @@ else:
             with st.spinner("Scanning database..."):
                 supabase.table("users").update({"event_name": event_name, "user_skills": user_skills, "skills_needed": skills_needed}).eq("username", st.session_state.username).execute()
                 matches = supabase.table("users").select("username, user_skills").eq("event_name", event_name).ilike("user_skills", f"%{skills_needed}%").neq("username", st.session_state.username).execute()
-                
+
                 # --- AI INTEGRATION SAFETY BLOCK ---
                 try:
                     prompt = f"I am at {event_name}. I have {user_skills} and need {skills_needed}. Give me a 1-sentence tip on how to pitch to potential teammates."
@@ -178,7 +177,7 @@ else:
                 except Exception as e:
                     st.error("Matches found, but AI Tip failed. Check API Key in settings.")
                     st.write(f"Matches found: {len(matches.data)}")
-                
+
                 for idx, match in enumerate(matches.data):
                     st.info(f"**Match #{idx+1}: {match['username']}** - Skills: {match['user_skills']}")
 
