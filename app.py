@@ -27,93 +27,97 @@ groq_client = init_groq()
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 4. Animated "Bloom Field" Background (Unchanged)
-animated_mesh_html = """
-<!DOCTYPE html>
-<html>
-<head>
+# 4. CUSTOM CSS (Retro Poster Theme + Burgundy Text + BaseWeb Overrides)
+st.markdown(
+    """
     <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; background-color: #2F5D46; }
-        #bg {
-            width: 100vw;
-            height: 100vh;
-            background-color: #2F5D46;
-            background-size: 120px 120px, auto, auto, auto, auto;
-            background-blend-mode: overlay, normal, normal, normal, normal;
-        }
-    </style>
-</head>
-<body>
-    <div id="bg"></div>
-    <script>
-        if (window.frameElement) {
-            window.frameElement.style.position = 'fixed';
-            window.frameElement.style.top = '0';
-            window.frameElement.style.left = '0';
-            window.frameElement.style.width = '100vw';
-            window.frameElement.style.height = '100vh';
-            window.frameElement.style.zIndex = '-1';
-            window.frameElement.style.border = 'none';
-            window.frameElement.style.pointerEvents = 'none';
-        }
-        const grain = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.280'/></svg>")`;
-        const blobs = [
-            { cx: 66.94, cy: 46.43, stops: "rgba(47, 93, 70, 1) 0%, rgba(47, 93, 70, 0.844) 19.02%, rgba(47, 93, 70, 0.5) 38.05%, rgba(47, 93, 70, 0.156) 57.07%, rgba(47, 93, 70, 0) 76.1%" }, 
-            { cx: 34.69, cy: 66.31, stops: "rgba(100, 158, 126, 1) 0%, rgba(100, 158, 126, 0.844) 12.73%, rgba(100, 158, 126, 0.5) 25.45%, rgba(100, 158, 126, 0.156) 38.18%, rgba(100, 158, 126, 0) 50.9%" }, 
-            { cx: 48.93, cy: 19.32, stops: "rgba(164, 209, 178, 1) 0%, rgba(164, 209, 178, 0.844) 16.75%, rgba(164, 209, 178, 0.5) 33.5%, rgba(164, 209, 178, 0.156) 50.25%, rgba(164, 209, 178, 0) 67%" }, 
-            { cx: 80.23, cy: 87.54, stops: "rgba(238, 246, 227, 1) 0%, rgba(238, 246, 227, 0.844) 10.28%, rgba(238, 246, 227, 0.5) 20.55%, rgba(238, 246, 227, 0.156) 30.83%, rgba(238, 246, 227, 0) 41.1%" }  
-        ];
-        const seed = 174074637;
-        function hash(n) { let s = Math.sin(n) * 43758.5453123; return s - Math.floor(s); }
-        blobs.forEach((b, i) => { b.p = hash(seed + i * 2) * Math.PI * 2; b.p2 = hash(seed + i * 2 + 1) * Math.PI * 2; });
-        const bgEl = document.getElementById('bg');
-        let startT = performance.now();
-        const amt = 0.40;
-        let rafId;
-        function render(now) {
-            if (document.hidden) return; 
-            const t = (now - startT) / 1000;
-            const ph = t * 1.00;
-            let gradients = blobs.map(b => {
-                const dx = (Math.sin(ph * 0.55 + b.p) - Math.sin(b.p)) * 14 * amt;
-                const dy = (Math.sin(ph * 0.43 + b.p2) - Math.sin(b.p2)) * 14 * amt;
-                const nx = b.cx + dx;
-                const ny = b.cy + dy;
-                return `radial-gradient(circle at ${nx}% ${ny}%, ${b.stops})`;
-            });
-            bgEl.style.backgroundImage = `${grain}, ${gradients.join(', ')}`;
-            rafId = requestAnimationFrame(render);
-        }
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) cancelAnimationFrame(rafId);
-            else rafId = requestAnimationFrame(render);
-        });
-        rafId = requestAnimationFrame(render);
-    </script>
-</body>
-</html>
-"""
-components.html(animated_mesh_html, height=0, width=0)
+    @import url('https://fonts.googleapis.com/css2?family=Lobster&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Space+Mono:wght@400;700&display=swap');
 
-# 5. CSS Styling (Unchanged)
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lobster&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap');
-    [data-testid="stAppViewContainer"], .stApp { background: transparent !important; background-color: transparent !important; }
+    /* Page background */
+    .stApp {
+        background-color: #EDE8DA !important;
+        background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px) !important;
+        background-size: 3px 3px, 5px 5px !important;
+    }
+    
+    /* Hide default Streamlit header */
     [data-testid="stHeader"] { background-color: transparent !important; }
-    h1, h2, h3, h4, h5, h6, p, label, div[data-testid="stMarkdownContainer"] > p { color: #EEF6E3 !important; font-family: 'Playfair Display', serif !important; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4) !important; }
-    h1 { font-family: 'Lobster', cursive !important; font-size: 64px !important; text-align: center; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5) !important; }
-    p, label { font-style: italic !important; font-size: 18px !important; }
-    .stTextInput input, .stTextArea textarea, .stNumberInput input { border: 1px solid rgba(164, 209, 178, 0.5) !important; border-radius: 10px !important; color: #EEF6E3 !important; background-color: rgba(47, 93, 70, 0.5) !important; font-family: 'Playfair Display', serif !important; font-style: italic !important; font-size: 18px !important; text-shadow: none !important; }
-    .stTextInput input::placeholder { color: #A4D1B2 !important; opacity: 0.9 !important; }
-    div.stButton > button { background-color: #649E7E !important; color: #FFFFFF !important; border-radius: 20px !important; padding: 0.6rem 2rem !important; transition: transform 0.2s ease, box-shadow 0.2s ease !important; border: 1px solid #EEF6E3 !important; font-family: 'Lobster', cursive !important; font-size: 24px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; text-shadow: none !important; }
-    div.stButton > button:hover { transform: scale(1.05) !important; background-color: #A4D1B2 !important; color: #2F5D46 !important; box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important; }
-    div[data-testid="stExpander"] details summary { background-color: rgba(47, 93, 70, 0.6) !important; border-radius: 10px !important; border: 1px solid rgba(164, 209, 178, 0.4) !important; }
-    div[data-testid="stExpander"] details summary p { color: #EEF6E3 !important; font-size: 20px !important; text-shadow: none !important; }
-    div[data-testid="stExpander"] details { background-color: rgba(100, 158, 126, 0.4) !important; border-radius: 10px !important; }
-    .stAlert { background-color: rgba(47, 93, 70, 0.8) !important; border: 1px solid #A4D1B2 !important; border-radius: 10px !important; }
+
+    /* Typography: Burgundy & Old Fonts */
+    h1, h2, h3, p, label, .stMarkdown, .stInfo, .stSuccess, .stError, .stWarning { 
+        color: #800020 !important; 
+        font-family: 'Playfair Display', serif !important;
+    }
+    h1 { 
+        font-family: 'Lobster', cursive !important; 
+        font-size: 72px !important; 
+        text-align: center; 
+        text-shadow: none !important;
+    }
+
+    /* HARDENED INPUT STYLE: Fixes the dark grey boxes shown in your screenshots */
+    div[data-baseweb="input"] {
+        background-color: transparent !important;
+        border: 2px solid #800020 !important;
+        border-radius: 0px !important;
+    }
+    div[data-baseweb="base-input"] {
+        background-color: transparent !important;
+    }
+    .stTextInput input, .stTextArea textarea, .stNumberInput input { 
+        background-color: #EDE8DA !important; 
+        color: #800020 !important; 
+        font-family: 'Space Mono', monospace !important;
+        -webkit-text-fill-color: #800020 !important; /* Forces text color in WebKit browsers */
+    }
+    
+    /* Focus state for inputs */
+    div[data-baseweb="input"]:focus-within {
+        border-color: #800020 !important;
+        box-shadow: 0 0 5px rgba(128, 0, 32, 0.5) !important;
+    }
+
+    /* Buttons: Burgundy background, Cream text */
+    div.stButton > button { 
+        background-color: #800020 !important; 
+        border-radius: 0px !important; 
+        border: none !important;
+        padding: 0.6rem 2rem !important;
+        width: 100% !important;
+        transition: transform 0.2s ease !important;
+    }
+    div.stButton > button p {
+        color: #EDE8DA !important; 
+        font-family: 'Space Mono', monospace !important;
+        font-size: 16px !important;
+    }
+    div.stButton > button:hover { 
+        transform: scale(1.02) !important;
+        background-color: #5a0016 !important; 
+    }
+
+    /* Zigzag border */
+    .zigzag-top {
+        height: 22px; width: 100%;
+        background: linear-gradient(135deg, #1c1c1c 25%, transparent 25%) -11px 0,
+                    linear-gradient(225deg, #1c1c1c 25%, transparent 25%) -11px 0;
+        background-size: 22px 22px; background-repeat: repeat-x; margin-bottom: 25px;
+    }
+    
+    /* Alerts and Expanders */
+    .stAlert { background-color: #EDE8DA !important; border: 1px solid #800020 !important; border-radius: 0px !important; }
+    div[data-testid="stExpander"] details { background-color: #EDE8DA !important; border: 1px solid #800020 !important; border-radius: 0px !important; }
+    div[data-testid="stExpander"] details summary p { color: #800020 !important; font-weight: 600 !important; }
+    div[data-testid="stExpander"] details summary svg { fill: #800020 !important; }
+    
+    hr { border-color: #800020 !important; }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
+
+# Render Zigzag
+st.markdown('<div class="zigzag-top"></div>', unsafe_allow_html=True)
 
 # -----------------------------------------
 # MAIN LOGIC
