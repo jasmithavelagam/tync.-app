@@ -21,6 +21,14 @@ def init_groq():
 
 supabase = init_connection()
 groq_client = init_groq()
+# --- DEBUG CHECK ---
+try:
+    key_value = st.secrets["GROQ_API_KEY"]
+    st.sidebar.write(f"Key Found! Length: {len(key_value)} characters.")
+    if not key_value.startswith("gsk_"):
+        st.sidebar.error("Warning: Key doesn't start with 'gsk_'! Check your copy-paste.")
+except Exception as e:
+    st.sidebar.error("Could not find GROQ_API_KEY in secrets!")
 
 # 3. Initialize Session State
 if 'logged_in' not in st.session_state:
