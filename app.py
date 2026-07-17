@@ -1,25 +1,32 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import time
+import requests
 from supabase import create_client, Client
+from groq import Groq
 
 # 1. Page Configuration
 st.set_page_config(page_title="Tync.", page_icon="✨")
 
-# 2. Initialize Supabase Connection
+# 2. Initialize Connections
 @st.cache_resource
 def init_connection():
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     return create_client(url, key)
 
-supabase = init_connection()
+@st.cache_resource
+def init_groq():
+    return Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# 3. Initialize Session State for Login
+supabase = init_connection()
+groq_client = init_groq()
+
+# 3. Initialize Session State
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# 4. Animated "Bloom Field" Background Component
+# 4. Animated "Bloom Field" Background (Restored Full Version)
 animated_mesh_html = """
 <!DOCTYPE html>
 <html>
@@ -103,7 +110,7 @@ animated_mesh_html = """
 """
 components.html(animated_mesh_html, height=0, width=0)
 
-# 5. Custom CSS
+# 5. Custom CSS (Restored)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Lobster&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap');
@@ -245,39 +252,44 @@ else:
     st.subheader("Your Details & Event Setup")
     event_name = st.text_input("Event / Hackathon Name", placeholder="e.g., TKRCET Hackathon 2.0")
     user_skills = st.text_input("Your Current Skills", placeholder="e.g., React.js, Node.js, Python")
-    skills_needed = st.text_input("Skills You Are Looking For (One keyword is best)", placeholder="e.g., Python")
+    skills_needed = st.text_input("Skills You Are Looking For", placeholder="e.g., Python")
     
     if st.button("Update Profile & Find Matches"):
         if not event_name or not skills_needed or not user_skills:
-            st.error("Please fill out all fields so we can find you the best match.")
+            st.error("Please fill out all fields.")
         else:
-            with st.spinner("Scanning the database..."):
+            with st.spinner("Scanning database & asking AI..."):
+                # Update DB
                 supabase.table("users").update({
                     "event_name": event_name,
                     "user_skills": user_skills,
                     "skills_needed": skills_needed
                 }).eq("username", st.session_state.username).execute()
                 
+                # Match
                 matches = supabase.table("users").select("username, user_skills").eq("event_name", event_name).ilike("user_skills", f"%{skills_needed}%").neq("username", st.session_state.username).execute()
                 
-                if len(matches.data) > 0:
-                    st.success(f"Found {len(matches.data)} match(es) for {event_name}!")
-                    for idx, match in enumerate(matches.data):
-                        st.info(f"**Match #{idx+1}: {match['username']}**\n\nThey have the skills you need: {match['user_skills']}")
-                else:
-                    st.warning("No perfect matches found yet. Try broadening your skill search, or check back later when more people join the event!")
+                # AI Advice
+                prompt = f"I am at {event_name}. I have {user_skills} and need {skills_needed}. Give me a 1-sentence tip on how to pitch to potential teammates."
+                ai_res = groq_client.chat.completions.create(messages=[{"role": "user", "content": prompt}], model="llama-3.3-70b-versatile")
+                
+                st.success(f"Found {len(matches.data)} match(es)!")
+                st.info(f"**AI Tip:** {ai_res.choices[0].message.content}")
+                
+                for idx, match in enumerate(matches.data):
+                    st.info(f"**Match #{idx+1}: {match['username']}** - Skills: {match['user_skills']}")
 
     st.markdown("---")
     st.markdown("### How to use Tync.")
     
     with st.expander("✨ What does Tync do?"):
-        st.markdown("Tync is your personal matchmaking assistant for tech events and hackathons. Instead of wandering around looking for teammates, Tync connects you with people who have the exact skills you're missing, ensuring your team is balanced and ready to win.")
+        st.markdown("Tync is your personal matchmaking assistant...")
 
     with st.expander("📝 Step 1: Enter your Event"):
-        st.markdown("Type in the name of the hackathon or event you're attending. This ensures we only match you with people who are actually going to the same place you are!")
+        st.markdown("...")
 
     with st.expander("🛠️ Step 2: List your Skills"):
-        st.markdown("Tell us what you bring to the table. Are you a Python expert? A Figma wizard? The algorithm uses this to make sure you don't overlap too much with your new teammates.")
+        st.markdown("...")
 
     with st.expander("🎯 Step 3: Who are you looking for?"):
-        st.markdown("List the skills you need to complete your project. Need a frontend developer? Write 'Frontend' or 'React'. Need someone to pitch? Write 'Presentation'.")
+        st.markdown("...")
